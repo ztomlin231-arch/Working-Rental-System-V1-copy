@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import fs from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
   buildRenewalTemplate,
@@ -24,6 +25,8 @@ initializeDatabase();
 const app = express();
 const port = Number(process.env.PORT) || 3001;
 const host = "0.0.0.0";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(cors());
 app.use(express.json({ limit: "1mb" }));
@@ -198,7 +201,18 @@ app.get("/api/export/rentals.csv", (_req, res) => {
   res.send(csv);
 });
 
-const clientDistPath = path.resolve(process.cwd(), "dist");
+function resolveClientDistPath() {
+  const productionDistPath = path.resolve(__dirname, "../../dist");
+  const sourceDistPath = path.resolve(__dirname, "../dist");
+
+  if (fs.existsSync(path.join(productionDistPath, "index.html"))) {
+    return productionDistPath;
+  }
+
+  return sourceDistPath;
+}
+
+const clientDistPath = resolveClientDistPath();
 const clientIndexPath = path.join(clientDistPath, "index.html");
 
 if (fs.existsSync(clientIndexPath)) {
